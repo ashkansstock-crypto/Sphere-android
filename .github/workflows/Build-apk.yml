@@ -1,0 +1,47 @@
+name: Build Sphere Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract project
+        run: |
+          mkdir project
+          unzip -o SphereBoxAndroid_Project.zip -d project
+          find project -maxdepth 5 -type f | head -100
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Android APK
+        run: |
+          cd project
+          ROOT=$(find . -type f -name AndroidManifest.xml | head -1)
+          if [ -z "$ROOT" ]; then
+            echo "AndroidManifest.xml not found"
+            exit 1
+          fi
+          APPDIR=$(dirname "$(dirname "$ROOT")")
+          echo "Detected app directory: $APPDIR"
+          echo "Searching for Gradle build files..."
+          find . -name build.gradle -o -name build.gradle.kts
+          echo "Gradle project configuration must exist before compilation."
+          exit 1
